@@ -39,4 +39,4 @@ ggplot(data = almond_yield_df, aes(x = year, y = yield)) +
 ```
 
 
-
+The model predicts annual almond yield anomaly by the mean daily minimum temperatures for the month of February and the total precipitation of January. Almond yield anomaly was greatest in 1995 with small spikes in 2005 and 2008. To find this we created a function that takes the users input data and uses the values for minimum February temperature and the sum of January precipitation and puts those parameters into the Lobell equation and outputs the almond yield anomaly for each year in a data frame. The data frame organizes almond yield anaomly by year.
