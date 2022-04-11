@@ -1,0 +1,21 @@
+---
+title: "almond_yield"
+author: "Danielle Sclafani"
+date: "4/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+```
+
+
+#reading in the climate data
+```{r}
+clim_data <- read.delim(here("data", "clim.txt"))
+
+view(clim_data)
+```
+
