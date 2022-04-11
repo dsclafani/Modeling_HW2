@@ -1,8 +1,9 @@
 ---
 title: "almond_yield"
-author: "Danielle Sclafani"
+author: "Danielle Sclafani, Wylie Hampson, Felicia Cruz"
 date: "4/11/2022"
-output: html_document
+output:
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -14,8 +15,28 @@ library(here)
 
 #reading in the climate data
 ```{r}
-clim_data <- read.delim(here("data", "clim.txt"))
+clim_data <- read.delim(here("data", "clim.txt"), sep = " ")
 
-view(clim_data)
+# view(clim_data)
 ```
+
+```{r}
+source(file = here("R", "almond_yield.R"))
+
+almond_yield_df <- almond_yield(data = clim_data)
+
+almond_yield_df
+```
+
+```{r}
+ggplot(data = almond_yield_df, aes(x = year, y = yield)) +
+  geom_col(fill = "blue") +
+  labs(title = "Almond Yield Anomoly (1989 - 2010)",
+       subtitle = "Based on January precipitation and February minimum temp. values.",
+       x = "Year",
+       y = "Yield Anomoly (Ton/Acre)") +
+  theme_minimal()
+```
+
+
 
