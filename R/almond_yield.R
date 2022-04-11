@@ -6,7 +6,7 @@
 #' 
 # Function Definition
 
-yield = function(tmin, tmax, p) {
+yield = function(tmin, p) {
   y = -0.015*tmin - 0.0046*tmin^2 -0.07*p +0.0043*p^2 + 0.28
   return(y)
 }
