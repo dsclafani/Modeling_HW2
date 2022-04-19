@@ -1,0 +1,52 @@
+---
+title: "Almond Profit"
+author: "Wylie Hampson, Dani Sclafani, Felicia Cruz"
+date: "4/18/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(tidyverse)
+library(purrr)
+```
+
+```{r}
+source(here("R", "almond_yield.R"))
+source(here("R", "almond_profit.R"))
+```
+
+```{r}
+clim_data <- read.delim(here("data", "clim.txt"), sep = " ")
+```
+
+
+```{r}
+almond_yield_df <- almond_yield(clim_data)
+```
+
+```{r}
+almond_profit_df <- almond_profit(yield = almond_yield_df$yield, 
+                                  year = almond_yield_df$year,
+                                  price = 6000)
+
+almond_profit_df
+```
+
+```{r}
+nsamples <-  300
+deviation <- 10
+base_yield <- 180
+yield <- runif(min = base_yield - deviation * base_yield,
+                      max = base_yield + deviation * base_yield,
+                      n = nsamples)
+price <- rnorm(mean = 6000, sd = 1000, n = nsamples)
+
+parms <- cbind.data.frame(yield, price, year)
+```
+
+```{r}
+results <- parms %>% pmap(almond_profit, year = year)
+```
+
