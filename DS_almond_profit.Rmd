@@ -1,0 +1,118 @@
+---
+title: "DS_almond_profit"
+author: "Danielle Sclafani"
+date: "4/18/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## trying almond profit
+```{r}
+library(purrr)
+library(tidyverse)
+```
+
+```{r}
+clim_data <- read.delim(here("data", "clim.txt"), sep = " ")
+
+test_data <- clim_data %>%
+    group_by(year, month) %>%
+    summarise(tmin = mean(tmin_c)) %>% 
+  filter(month==2)
+  
+  tmin_feb <- test_data %>% filter(month == 2) %>% select(tmin)
+  
+  df <- left_join(tmin_feb, precip_jan) %>%
+    rename(tmin_feb = tmin, precip_jan = precip)
+```
+
+```{r}
+source(file = here("R", "DS_almond_profit.R"))
+
+almond_profit_DS
+```
+
+```{r}
+#testing out function
+almond_profit_DS(precip = 10, data = clim_data, price=600)
+
+```
+
+```{r}
+clim_data <- read.delim(here("data", "clim.txt"), sep = " ")
+
+#this is getting me the total precip in feb for all the years, so i can find a reasonable data sample to make for the profit
+precip_jan_sum <- clim_data %>% 
+  group_by(year, month) %>% 
+  filter(month == 1) %>% 
+  summarise(precip_total = sum(precip))
+
+mean_precip = mean(precip_jan_sum$precip_total) 
+sd_precip = sd(precip_jan_sum$precip_total)
+
+#making the sample of precipitation sums in the month of february from the info taken from above
+n_samples = 300
+
+precip = rnorm(mean = mean_precip, sd =sd_precip, n=n_samples )
+
+```
+
+
+```{r}
+#making a sample of prices with variatino of  +/- 15% of base price of $3600/ton of almonds
+
+base_price=6000
+deviation = 0.15
+min_price = base_price-base_price*deviation
+max_price = base_price+base_price*deviation
+
+
+
+price= runif(min = min_price,
+                   max = max_price,
+                   n=n_samples)
+```
+
+
+
+
+
+```{r}
+
+
+parms=cbind.data.frame(precip, price)
+
+profit_results = parms %>% pmap(price =)
+
+```
+
+
+
+
+```{r}
+#how many samples of price
+
+
+almond_profit_DS(precip = 6, temp=27, price = 600)
+
+
+
+
+#making sample of various temps
+temp = rnorm(mean=30, sd=5, n=n_samples)
+
+precip =rnorm(mean=15, sd=15, n=n_samples)
+
+parameters = cbind.data.frame(temp, precip)
+
+profit_results = parameters %>% pmap(almond_profit_DS)
+length(profit_results)
+
+profit_df <- as.data.frame(profit_results)
+pivot_longer(profit_df, cols = price, yield)
+
+```

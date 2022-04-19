@@ -5,7 +5,7 @@
 #' 
 # Function Definition
 
-#according to Lobell paper, minimum temperature data is to be taken from month 2 of each year
+#according to Lobell paper, minimum temperature data is to be taken from month 2 of each year and total precipitation for January
 
 almond_yield <- function(data) {
 
