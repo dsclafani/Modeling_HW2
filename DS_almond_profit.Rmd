@@ -13,106 +13,97 @@ knitr::opts_chunk$set(echo = TRUE)
 ## trying almond profit
 ```{r}
 library(purrr)
+library(here)
 library(tidyverse)
+library(ggpubr)
+
 ```
+
+### Trying over with varying the coefficients
+
 
 ```{r}
 clim_data <- read.delim(here("data", "clim.txt"), sep = " ")
 
-test_data <- clim_data %>%
-    group_by(year, month) %>%
-    summarise(tmin = mean(tmin_c)) %>% 
-  filter(month==2)
-  
-  tmin_feb <- test_data %>% filter(month == 2) %>% select(tmin)
-  
-  df <- left_join(tmin_feb, precip_jan) %>%
-    rename(tmin_feb = tmin, precip_jan = precip)
+#sourcing in almond yield function
+source(file = here("R", "almond_yield.R"))
+
+almond_yield
+
+nsamples =300
+
+#creating samples of coefficient 1
+coef_1 = rnorm(mean = -0.015, sd = 0.005, n =nsamples)
+
+#creating samples of ceofficient 3
+coef_3= rnorm(mean = 0.07, sd = 0.025, n=nsamples)
+
+parms = cbind.data.frame(coef_1, coef_3)
+
+results = parms %>% pmap(almond_yield, 
+                         data = clim_data, 
+                         coef_2 = 0.0046, 
+                         coef_4 = 0.0043, 
+                         const = 0.28)
+
+results[[1]]
 ```
 
 ```{r}
-source(file = here("R", "DS_almond_profit.R"))
-
-almond_profit_DS
-```
-
-```{r}
-#testing out function
-almond_profit_DS(precip = 10, data = clim_data, price=600)
-
-```
-
-```{r}
-clim_data <- read.delim(here("data", "clim.txt"), sep = " ")
-
-#this is getting me the total precip in feb for all the years, so i can find a reasonable data sample to make for the profit
-precip_jan_sum <- clim_data %>% 
-  group_by(year, month) %>% 
-  filter(month == 1) %>% 
-  summarise(precip_total = sum(precip))
-
-mean_precip = mean(precip_jan_sum$precip_total) 
-sd_precip = sd(precip_jan_sum$precip_total)
-
-#making the sample of precipitation sums in the month of february from the info taken from above
-n_samples = 300
-
-precip = rnorm(mean = mean_precip, sd =sd_precip, n=n_samples )
-
+length(results)
 ```
 
 
 ```{r}
-#making a sample of prices with variatino of  +/- 15% of base price of $3600/ton of almonds
+#extracting the results from above, the output of the function is yield, so we extract the yield results as a list
+a_yield = map_df(results,`[`,c("yield"))
 
-base_price=6000
-deviation = 0.15
-min_price = base_price-base_price*deviation
-max_price = base_price+base_price*deviation
+#now we can add the yield results to the parameters of coef_1 and coef_3 that we varied
+a_yield = cbind.data.frame(a_yield, parms)
 
+#now plotting the graphs
+yield_plot_1 = ggplot(data=a_yield, aes(coef_1, yield, col = coef_3)) +geom_point(cex=2)+
+  labs(y="Almond Yield Anamoly (tons/acre)", x = "Variation in coeficient 1")
 
+#yield_plot_1
 
-price= runif(min = min_price,
-                   max = max_price,
-                   n=n_samples)
+yield_plot_2 = ggplot(data=a_yield, aes(coef_3, yield, col = coef_1)) +geom_point(cex=2)+
+  labs(y="Almond Yield Anamoly (tons/acre)", x = "Variation in coeficient 3")
+
+#yield_plot_2
+
+#need to download library for ggarround before i can run this
+ggarrange(yield_plot_1, yield_plot_2) 
 ```
-
-
-
 
 
 ```{r}
-
-
-parms=cbind.data.frame(precip, price)
-
-profit_results = parms %>% pmap(price =)
-
+# tmp=map_df(results,`[`,c("year"))
+# annual_yield = as.data.frame(tmp$yield)
+# colnames(annual_year) = "year"
+# annual_yield$yield = tmp$yield
 ```
 
-
+#skipped the annual part on pmap page for now- not sure if we need it
 
 
 ```{r}
-#how many samples of price
+#right now we have 300 samples per year, we might need to results- groupby yield and summarize by mean?--> need to convert results ot a data frame- need to use pivot longer? not 
+
+results_df <- as.data.frame(results)
+
+mean_results <- results_df %>% group_by(years) %>% 
+  summarise(mean_yield = mean(yield))
 
 
-almond_profit_DS(precip = 6, temp=27, price = 600)
+#For Loop section of Prof Notes 
 
+mean_yield_for = rep(NA, times=nsamples)
+#for annual we need rows
+years= unique(clim_data$year)
 
+annual_yield_for = as.data.frame(matrix(ncol = nsamples, nrow = (years)))
 
-
-#making sample of various temps
-temp = rnorm(mean=30, sd=5, n=n_samples)
-
-precip =rnorm(mean=15, sd=15, n=n_samples)
-
-parameters = cbind.data.frame(temp, precip)
-
-profit_results = parameters %>% pmap(almond_profit_DS)
-length(profit_results)
-
-profit_df <- as.data.frame(profit_results)
-pivot_longer(profit_df, cols = price, yield)
-
+annual_yield_for$year = years
 ```
+
