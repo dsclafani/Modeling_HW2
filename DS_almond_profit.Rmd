@@ -16,7 +16,6 @@ library(purrr)
 library(here)
 library(tidyverse)
 library(ggpubr)
-
 ```
 
 ### Trying over with varying the coefficients
@@ -26,25 +25,26 @@ library(ggpubr)
 clim_data <- read.delim(here("data", "clim.txt"), sep = " ")
 
 #sourcing in almond yield function
-source(file = here("R", "almond_yield.R"))
+source(file = here("R", "almond_profit.R"))
 
-almond_yield
+almond_profit
 
-nsamples =300
+nsamples <-  300
 
 #creating samples of coefficient 1
-coef_1 = rnorm(mean = -0.015, sd = 0.005, n =nsamples)
+coef_1 <-  rnorm(mean = -0.015, sd = 0.005, n =nsamples)
 
 #creating samples of ceofficient 3
-coef_3= rnorm(mean = 0.07, sd = 0.025, n=nsamples)
+coef_3 <-  rnorm(mean = 0.07, sd = 0.025, n=nsamples)
 
-parms = cbind.data.frame(coef_1, coef_3)
+parms <-  cbind.data.frame(coef_1, coef_3)
 
-results = parms %>% pmap(almond_yield, 
-                         data = clim_data, 
-                         coef_2 = 0.0046, 
-                         coef_4 = 0.0043, 
-                         const = 0.28)
+results <-  parms %>% pmap(almond_profit,
+                           price = 6000,
+                           data = clim_data, 
+                           coef_2 = 0.0046, 
+                           coef_4 = 0.0043, 
+                           const = 0.28)
 
 results[[1]]
 ```
@@ -55,45 +55,60 @@ length(results)
 
 
 ```{r}
-#extracting the results from above, the output of the function is yield, so we extract the yield results as a list
-a_yield = map_df(results,`[`,c("yield"))
+#extracting the results from above, the output of the function is profit, so we extract the profit results as a list
+a_profit = map_df(results,`[`,c("year", "profit"))
 
 #now we can add the yield results to the parameters of coef_1 and coef_3 that we varied
-a_yield = cbind.data.frame(a_yield, parms)
+a_profit = cbind.data.frame(a_profit, parms)
 
 #now plotting the graphs
-yield_plot_1 = ggplot(data=a_yield, aes(coef_1, yield, col = coef_3)) +geom_point(cex=2)+
-  labs(y="Almond Yield Anamoly (tons/acre)", x = "Variation in coeficient 1")
+profit_plot_1 = ggplot(data=a_yield, aes(coef_1, profit, col = coef_3)) +geom_point(cex=2)+
+  labs(y="Almond Profit", x = "Variation in coeficient 1")
 
 #yield_plot_1
 
-yield_plot_2 = ggplot(data=a_yield, aes(coef_3, yield, col = coef_1)) +geom_point(cex=2)+
-  labs(y="Almond Yield Anamoly (tons/acre)", x = "Variation in coeficient 3")
+profit_plot_2 = ggplot(data=a_yield, aes(coef_3, profit, col = coef_1)) +geom_point(cex=2)+
+  labs(y="Almond Profit", x = "Variation in coeficient 3")
 
 #yield_plot_2
 
 #need to download library for ggarround before i can run this
-ggarrange(yield_plot_1, yield_plot_2) 
+profit_scatter <- ggarrange(profit_plot_1, profit_plot_2) 
+
+ggsave(plot = profit_scatter, here("figures", "profit_scatter.png"))
+
+profit_scatter
+```
+
+```{r, message=FALSE}
+almond_profit_boxplot <- ggplot(a_profit, aes(x = as.factor(year), y = profit)) +
+  geom_boxplot() +
+  labs(y = "Almond Profit $")
+
+ggsave(plot = almond_profit_boxplot, here("figures", "almond_profit_boxplot.png"))
+
+almond_profit_boxplot
 ```
 
 
 ```{r}
 # tmp=map_df(results,`[`,c("year"))
-# annual_yield = as.data.frame(tmp$yield)
+# annual_profit = as.data.frame(tmp$profit)
 # colnames(annual_year) = "year"
-# annual_yield$yield = tmp$yield
+# annual_profit$profit = tmp$profit
 ```
 
 #skipped the annual part on pmap page for now- not sure if we need it
 
 
 ```{r}
-#right now we have 300 samples per year, we might need to results- groupby yield and summarize by mean?--> need to convert results ot a data frame- need to use pivot longer? not 
+#right now we have 300 samples per year, we might need to results- groupby profit and summarize by mean?--> need to convert results ot a data frame- need to use pivot longer? not 
 
-results_df <- as.data.frame(results)
+results_df <- as.data.frame(results) %>% 
+  pivot_longer(cols=-c(year, profit))
 
 mean_results <- results_df %>% group_by(years) %>% 
-  summarise(mean_yield = mean(yield))
+  summarise(mean_profit = mean(profit))
 
 
 #For Loop section of Prof Notes 
